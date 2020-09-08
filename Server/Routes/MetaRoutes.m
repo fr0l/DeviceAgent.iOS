@@ -13,6 +13,10 @@
 #import "CBXRoute.h"
 #import "XCTest+CBXAdditions.h"
 
+#import <MobileCoreServices/MobileCoreServices.h>
+#import "XCTestManager_ManagerInterface-Protocol.h"
+#import "Testmanagerd.h"
+
 @implementation MetaRoutes
 + (NSArray <CBXRoute *> *)getRoutes {
     return @[
@@ -136,15 +140,29 @@
                              NSDictionary *body,
                              RouteResponse *response) {
 
-                     NSError *error = nil;
-                     NSData *screenshotData = [XCUIScreen.mainScreen screenshotDataForQuality:1 rect:CGRectNull error:&error];
-                     if (nil == screenshotData) {
-                       @throw [CBXException withFormat:@"Cannot take screenshot from the device"];
+                 CGFloat screenshotCompressionQuality = 1.0f;
+                 id<XCTestManager_ManagerInterface> proxy = [Testmanagerd get];
+                 __block NSData *screenshotData = nil;
+                 dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+                 [proxy _XCT_requestScreenshotOfScreenWithID:[[XCUIScreen mainScreen] displayID]
+                                                    withRect:CGRectNull
+                                                         uti:(__bridge id)kUTTypePNG
+                                          compressionQuality:screenshotCompressionQuality
+                                                   withReply:^(NSData *data, NSError *error) {
+                     if (error != nil) {
+                         DDLogError(@"Error taking screenshot: %@", [error description]);
                      }
-                     NSString *screenshot = [screenshotData base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
-                     
+                     screenshotData = data;
+                     dispatch_semaphore_signal(sem);
+                 }];
+                 dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)));
 
-                     [response respondWithJSON:@{@"value": screenshot}];
+                 if (nil == screenshotData) {
+                     @throw [CBXException withFormat:@"Cannot take screenshot from the device"];
+                 }
+
+                 NSString *screenshot = [screenshotData base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
+                 [response respondWithJSON:@{@"value": screenshot}];
              }]
         ];
 }
