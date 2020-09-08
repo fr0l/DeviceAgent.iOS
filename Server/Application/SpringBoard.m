@@ -54,8 +54,6 @@ typedef enum : NSUInteger {
     dispatch_once(&onceToken, ^{
         _springBoard = [[SpringBoard alloc]
                         initWithBundleIdentifier:@"com.apple.springboard"];
-
-        [XCUIApplication cbxResolveApplication:_springBoard];
     });
     return _springBoard;
 }
@@ -87,56 +85,8 @@ typedef enum : NSUInteger {
 
         if (![self shouldDismissAlertsAutomatically]) { return; }
 
-        SpringBoardAlertHandlerResult current = SpringBoardAlertHandlerNoAlert;
-
-        // There are fewer than 20 kinds of SpringBoard alerts.
-        NSUInteger maxTries = 20;
-        NSUInteger try = 0;
-
-        current = [self handleAlert];
-
-        while(current != SpringBoardAlertHandlerNoAlert && try < maxTries) {
-            current = [self handleAlert];
-            if (current == SpringBoardAlertHandlerUnrecognizedAlert) {
-                break;
-            }
-            try = try + 1;
-        }
-
-        if (try == maxTries || current == SpringBoardAlertHandlerUnrecognizedAlert) {
-            XCUIElement *alert = nil;
-            NSString *alertTitle = nil;
-            NSArray *alertButtonTitles = @[];
-
-            alert = [self queryForAlert];
-
-            if (alert && alert.exists) {
-                alertTitle = alert.label;
-                XCUIElementQuery *query = [alert descendantsMatchingType:XCUIElementTypeButton];
-                NSArray<XCUIElement *> *buttons = [query allElementsBoundByIndex];
-
-                NSMutableArray *mutable = [NSMutableArray arrayWithCapacity:buttons.count];
-
-                for(XCUIElement *button in buttons) {
-                    if (button.exists) {
-                        NSString *name = button.label;
-                        if (name) {
-                            [mutable addObject:name];
-                        }
-                    }
-                }
-                alertButtonTitles = [NSArray arrayWithArray:mutable];
-            }
-
-            NSString *message;
-            message = @"A SpringBoard alert is blocking test execution and it cannot be dismissed.";
-            @throw [CBXException withMessage:message
-                                    userInfo:@{
-                                               @"title" : alertTitle ?: [NSNull null],
-                                               @"buttons" : alertButtonTitles,
-                                               @"tries" : @(maxTries)
-                                               }];
-        }
+        XCUIApplication *app = [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.springboard"];
+        [self dismissAlertsRecursively:app];
     }
 }
 
@@ -396,6 +346,88 @@ typedef enum : NSUInteger {
     }
 
     return translated;
+}
+
+
+- (void)dismissAlertsRecursively:(XCUIApplication *)app {
+    XCUIElementQuery *alerts = [app alerts];
+
+    if ([alerts count] == 0) {
+      DDLogError(@"DA_DEBUG: No Alerts found - alerts count == 0");
+      return;
+    }
+
+    [self dismissAlertWithButton:@"Cancel" app:app];
+    [self dismissAlertWithButton:@"OK" app:app];
+    [self dismissAlertWithFirstButtonForApp:app];
+    [self dismissAlertWithLastButtonForApp:app];
+
+    [self dismissAlertsRecursively:app];
+}
+
+- (void)dismissAlertWithButton:(NSString *)buttonName app:(XCUIApplication *)app
+{
+    XCUIElementQuery *alerts = [app alerts];
+
+    if ([alerts count] == 0) {
+      DDLogError(@"DA_DEBUG: No Alerts found - alerts count == 0");
+      return;
+    }
+
+    XCUIElement *alert = [alerts element];
+
+    XCUIElementQuery *buttonQuery = [[alert buttons] matchingIdentifier:buttonName];
+
+    if ([buttonQuery count] > 0) {
+      DDLogError(@"DA_DEBUG: Dismissing alert by pressing button %@", buttonName);
+      [[buttonQuery element] tap];
+      DDLogError(@"DA_DEBUG: DID Dismiss alert by pressing button %@", buttonName);
+    } else {
+        DDLogError(@"DA_DEBUG: No button with name %@ found", buttonName);
+    }
+
+    NSTimeInterval sleepAfterDismiss = 1;
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, sleepAfterDismiss, false);
+}
+
+- (void)dismissAlertWithLastButtonForApp:(XCUIApplication *)app
+{
+    XCUIElementQuery *alerts = [app alerts];
+
+    if ([alerts count] == 0) {
+      DDLogError(@"DA_DEBUG: No Alerts found - alerts count == 0");
+      return;
+    }
+
+    XCUIElement *alert = [alerts element];
+
+    DDLogError(@"DA_DEBUG: Dismissing alert by pressing last button");
+    NSArray<XCUIElement *> *buttons = [[alert buttons] allElementsBoundByAccessibilityElement];
+    [[buttons lastObject] tap];
+    DDLogError(@"DA_DEBUG: DID Dismiss alert by pressing last button");
+
+    NSTimeInterval sleepAfterDismiss = 1;
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, sleepAfterDismiss, false);
+}
+
+- (void)dismissAlertWithFirstButtonForApp:(XCUIApplication *)app
+{
+    XCUIElementQuery *alerts = [app alerts];
+
+    if ([alerts count] == 0) {
+      DDLogError(@"DA_DEBUG: No Alerts found - alerts count == 0");
+      return;
+    }
+
+    XCUIElement *alert = [alerts element];
+
+    DDLogError(@"DA_DEBUG: Dismissing alert by pressing last button");
+    NSArray<XCUIElement *> *buttons = [[alert buttons] allElementsBoundByAccessibilityElement];
+    [[buttons firstObject] tap];
+    DDLogError(@"DA_DEBUG: DID Dismiss alert by pressing last button");
+
+    NSTimeInterval sleepAfterDismiss = 1;
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, sleepAfterDismiss, false);
 }
 
 @end
