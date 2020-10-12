@@ -59,7 +59,6 @@
 		7DEAAE74241FA80D009894BA /* FBXCTestCaseImplementationFailureHoldingProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DEAAE72241FA80D009894BA /* FBXCTestCaseImplementationFailureHoldingProxy.m */; };
 		7DEAAE75241FA80D009894BA /* FBXCTestCaseImplementationFailureHoldingProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DEAAE73241FA80D009894BA /* FBXCTestCaseImplementationFailureHoldingProxy.h */; };
 		7DEAAE77241FA8B5009894BA /* XCTestCase.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DEAAE76241FA8B4009894BA /* XCTestCase.h */; };
-		7DEAAE79241FEEF8009894BA /* _XCTestCaseImplementation.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DEAAE78241FEEF7009894BA /* _XCTestCaseImplementation.h */; };
 		7DF60845243B5D1200A66E46 /* FBTCPSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DF60843243B5D1200A66E46 /* FBTCPSocket.h */; };
 		7DF60846243B5D1200A66E46 /* FBTCPSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DF60844243B5D1200A66E46 /* FBTCPSocket.m */; };
 		7DF60849243B5DFF00A66E46 /* FBMjpegServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 7DF60847243B5DFF00A66E46 /* FBMjpegServer.m */; };
@@ -3915,6 +3914,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Karl Krukow (YTTN6Y2QS9)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = FYD86LA7RE;
+				EXCLUDED_ARCHS = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",
@@ -3955,6 +3955,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Karl Krukow (YTTN6Y2QS9)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = FYD86LA7RE;
+				EXCLUDED_ARCHS = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",
